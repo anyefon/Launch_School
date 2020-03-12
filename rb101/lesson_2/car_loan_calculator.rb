@@ -14,76 +14,80 @@ def validate_year?(yr)
   /\d/.match(yr) && yr.to_i >= 0
 end
 
-def loan_converter(duration_in_yrs)
+def yrs_to_months(duration_in_yrs)
   duration_in_yrs.to_i * 12
 end
 
-def interest_converter(int_rate)
-  int_rate.to_f / 1200
-end
-
-def payment_calc(p, j, n)
-  p.to_f * (j / (1 - (1 + j)**(-n)))
+def interest_converter(rate)
+  rate.to_f / 1200
 end
 
 def result(amt)
   format('$%.2f', amt)
 end
 
-clear_screen
-prompt "Welcome to the best Car loan Calculator!\n\n"
-loop do
-  prompt "What is the loan amount? (in dollars)"
+def obtain_loan
+  prompt " What is the loan amount? (in dollars)"
 
   loan_amt = nil
   loop do
     loan_amt = gets.chomp
 
-    if valid_num?(loan_amt)
-      break
-    else
-      prompt("Enter a valid positive loan amount")
-    end
+    break if valid_num?(loan_amt)
+    prompt "Enter a valid positive loan amount"
   end
+  loan_amt
+end
 
-  prompt("Enter the interest rate in % (for example 7 for 7%)")
-
+def obtain_int_rate
+  prompt "Enter the interest rate in % (for example 7 for 7%)"
   interest_rate = nil
   loop do
     interest_rate = gets.chomp
-    if valid_num?(interest_rate)
-      break
-    else
-      prompt("Make sure to enter a valid non-negative interest rate")
-    end
+    break if valid_num?(interest_rate)
+    prompt "Make sure to enter a valid non-negative interest rate"
   end
+  interest_rate
+end
 
-  prompt("Enter the loan duration in years")
-
-  loan_duration = nil
+def obtain_loan_duration
+  prompt "Enter the loan duration in years"
+  loan_dur = nil
   loop do
-    loan_duration = gets.chomp
-    if validate_year?(loan_duration)
-      break
-    else
-      prompt("Make sure to enter a valid non-negative loan duration")
-    end
+    loan_dur = gets.chomp
+    break if validate_year?(loan_dur)
+    prompt "Make sure to enter a valid non-negative loan duration"
   end
+  loan_dur
+end
 
-  #  conversion of load duration in yrs to loan duration in months
-  month_dur = loan_converter(loan_duration)
+def calculate_monthly_payment(amount, rate, duration)
+  dur_in_mths = yrs_to_months(duration)
 
-  monthly_interest_rate = interest_converter(interest_rate)
+  monthly_rate = interest_converter(rate)
+  amount.to_f * (monthly_rate / (1 - (1 + monthly_rate)**(-dur_in_mths)))
+end
 
-  monthly_payment = payment_calc(loan_amt, monthly_interest_rate, month_dur)
+clear_screen
+prompt "Welcome to the best Car loan Calculator!\n\n"
+loop do
+  loan_amount = obtain_loan
 
-  prompt(" Your monthly payment is :#{result(monthly_payment)}")
+  int_rate = obtain_int_rate
 
-  prompt("Another calculation?")
+  loan_dur = obtain_loan_duration
+
+  monthly_payment = calculate_monthly_payment(loan_amount, int_rate, loan_dur)
+
+  prompt "Amount $#{loan_amount}, rate #{int_rate}%, duration #{loan_dur} years"
+  prompt " Your monthly payment is :#{result(monthly_payment)}"
+
+  prompt "Another calculation? Enter Y to continue or any other key to exit"
   answer = gets.chomp
 
   break unless answer.downcase().start_with?('y')
+  clear_screen
 end
 clear_screen
 
-prompt("Thank for using car loan calculator and have a nice day!")
+prompt "Thank for using car loan calculator and have a nice day!"
