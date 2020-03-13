@@ -32,61 +32,77 @@ def lang_choice(lang_number)
   end
 end
 
+def choose_lang
+  prompt messages 'language_choice', "en"
+  prompt messages 'language_choice', "cn"
+  calculator_lang = ''
+  loop do
+    calculator_lang = Kernel.gets.chomp
+    break unless !(valid_num?(calculator_lang))
+    prompt "Choose 1 for English or 2 for Mandarin"
+  end
+  lang_choice(calculator_lang)
+end
+
+def obtain_name
+  name = ''
+  loop do
+    name = Kernel.gets.chomp
+    break unless name.empty?()
+    prompt messages 'valid_name', language
+  end
+  name
+end
+
+def obtain_number(numb_str, lang)
+  number = ''
+  loop do
+    prompt messages numb_str, lang
+    number = Kernel.gets().chomp()
+    break unless !(valid_float?(number))
+    prompt messages 'valid_number', lang
+  end
+  number
+end
+
+def choose_operation(lang)
+  opr = ''
+  loop do
+    opr = Kernel.gets().chomp()
+
+    break unless !(%w(1 2 3 4).include?(opr))
+    prompt messages 'valid_operator', lang
+  end
+  opr
+end
+
+def calculation(opr, number1, number2)
+  case opr
+  when '1'
+    number1.to_i + number2.to_i
+  when '2'
+    number1.to_i - number2.to_i
+  when '3'
+    number1.to_i * number2.to_i
+  when '4'
+    number1.to_f / number2.to_f
+  end
+end
+
 def clear_screen
   system('clear') || system('cls')
 end
-prompt messages 'language_choice', "en"
-prompt messages 'language_choice', "cn"
 
-calculator_lang = ''
-loop do
-  calculator_lang = Kernel.gets.chomp
-  if valid_num?(calculator_lang)
-    break
-  else
-    prompt "Choose 1 for English or 2 for Mandarin"
-  end
-end
-
-language = lang_choice(calculator_lang)
+language = choose_lang
 clear_screen
 
 prompt messages 'welcome', language
+user_name = obtain_name
 
-name = ''
-loop do
-  name = Kernel.gets.chomp
-
-  break unless name.empty?()
-  prompt messages 'valid_name', language
-end
-
-prompt messages('greeting', language) + name + "!"
+prompt messages('greeting', language) + user_name + "!"
 loop do # main loop
-  number1 = ''
-
-  loop do
-    prompt messages 'first_number', language
-    number1 = Kernel.gets().chomp()
-
-    if valid_float?(number1)
-      break
-    else
-      prompt messages 'valid_number', language
-    end
-  end
-
-  number2 = ''
-  loop do
-    prompt messages 'second_number', language
-    number2 = Kernel.gets().chomp()
-
-    if valid_float?(number2)
-      break
-    else
-      prompt messages 'valid_number', language
-    end
-  end
+  first_number = obtain_number('first_number', language)
+  second_number = obtain_number('second_number', language)
 
   prompt messages 'operator_choice', language
   prompt messages 'operator_choice_addition', language
@@ -94,29 +110,11 @@ loop do # main loop
   prompt messages 'operator_choice_multiplication', language
   prompt messages 'operator_choice_division', language
 
-  operator = ''
-  loop do
-    operator = Kernel.gets().chomp()
-
-    if %w(1 2 3 4).include?(operator)
-      break
-    else
-      prompt messages 'valid_operator', language
-    end
-  end
+  operator = choose_operation(language)
 
   prompt op_to_mes(operator, language) + messages('confirm_op', language)
 
-  result = case operator
-           when '1'
-             number1.to_i + number2.to_i
-           when '2'
-             number1.to_i - number2.to_i
-           when '3'
-             number1.to_i * number2.to_i
-           when '4'
-             number1.to_f / number2.to_f
-           end
+  result = calculation(operator, first_number, second_number)
   prompt messages('result', language) + result.to_s
 
   prompt messages 'continuation_prompt', language
@@ -125,4 +123,4 @@ loop do # main loop
   clear_screen
 end
 clear_screen
-prompt name + messages('thanks', language)
+prompt user_name + messages('thanks', language)
