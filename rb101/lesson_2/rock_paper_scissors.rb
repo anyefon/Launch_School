@@ -8,11 +8,11 @@ CHOICE_LIST = Hash['r', 'rock',
                    'l', 'lizard',
                    'sp', 'spock']
 
-WINNING_LIST = Hash['rock', %w(lizard scissors),
-                    'paper', %w(rock spock),
-                    'scissors', %w(paper lizard),
-                    'lizard', %w(spock paper),
-                    'spock', %w(scissors rock)]
+WINNING_PAIRS = Hash['rock', %w(lizard scissors),
+                     'paper', %w(rock spock),
+                     'scissors', %w(paper lizard),
+                     'lizard', %w(spock paper),
+                     'spock', %w(scissors rock)]
 
 scores = Hash['you', 0,
               'computer', 0]
@@ -29,7 +29,7 @@ def validate_s_input
   letter = ''
 
   loop do
-    letter = gets.chomp
+    letter = gets.chomp.downcase
     break unless letter == 's'
     prompt messages "invalid_s_input"
   end
@@ -49,19 +49,32 @@ def validate_input
   choice
 end
 
+def obtain_my_choice
+  str = validate_input
+  CHOICE_LIST[str]
+end
+
+def obtain_computer_choice
+  CHOICE_LIST[CHOICE_LIST.keys.sample()]
+end
+
 def increment_score(score_hash, scorer)
   score_hash[scorer] += 1
 end
 
-def display_results(player, computer, scores_hsh)
-  if WINNING_LIST[player].include?(computer)
-    prompt messages "my_win"
+def display_results(str)
+  prompt messages str
+end
+
+def win?(player, computer, scores_hsh)
+  if WINNING_PAIRS[player].include?(computer)
+    display_results("my_win")
     increment_score(scores_hsh, 'you')
-  elsif WINNING_LIST[computer].include?(player)
-    prompt messages "computer_win"
+  elsif WINNING_PAIRS[computer].include?(player)
+    display_results("computer_win")
     increment_score(scores_hsh, 'computer')
   else
-    prompt messages "tie"
+    display_results("tie")
   end
 end
 
@@ -75,14 +88,12 @@ prompt messages "welcome"
 my_choice = ''
 
 loop do
-  abbr_choice = validate_input
+  my_choice = obtain_my_choice
+  computer_choice = obtain_computer_choice
 
-  my_choice = CHOICE_LIST[abbr_choice]
-
-  computer_choice = CHOICE_LIST[CHOICE_LIST.keys.sample()]
   prompt format(messages("choice_output"), p1: my_choice, p2: computer_choice)
 
-  display_results(my_choice, computer_choice, scores)
+  win?(my_choice, computer_choice, scores)
   p scores
 
   break unless !(scores.values.include?(5))
@@ -94,5 +105,5 @@ loop do
 end
 
 clear_screen
-prompt "#{scores.key(5)} is the grand winner!" if scores.values.include?(5)
+prompt format(messages("g_mes"), wr: scores.key(5)) if scores.values.include?(5)
 prompt messages "thanks"
