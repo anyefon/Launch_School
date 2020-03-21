@@ -14,7 +14,7 @@ WINNING_PAIRS = Hash['rock', %w(lizard scissors),
                      'lizard', %w(spock paper),
                      'spock', %w(scissors rock)]
 
-scores = Hash['you', 0,
+scores = Hash['player', 0,
               'computer', 0]
 
 def messages(message)
@@ -58,23 +58,50 @@ def obtain_computer_choice
   CHOICE_LIST[CHOICE_LIST.keys.sample()]
 end
 
-def increment_score(score_hash, scorer)
-  score_hash[scorer] += 1
+def display_choices(my_choice, computer_choice)
+  prompt "You chose #{my_choice} and the computer chose #{computer_choice}"
 end
 
-def display_results(str)
-  prompt messages str
+def win?(my_choice, computer_choice)
+  if WINNING_PAIRS[my_choice].include?(computer_choice)
+    'player'
+  elsif WINNING_PAIRS[computer_choice].include?(my_choice)
+    'computer'
+  end
 end
 
-def win?(player, computer, scores_hsh)
-  if WINNING_PAIRS[player].include?(computer)
-    display_results("my_win")
-    increment_score(scores_hsh, 'you')
-  elsif WINNING_PAIRS[computer].include?(player)
-    display_results("computer_win")
-    increment_score(scores_hsh, 'computer')
+def display_results(winner)
+  if winner
+    prompt messages winner
   else
-    display_results("tie")
+    prompt messages 'tie'
+  end
+end
+
+def display_current_scores(hsh)
+  prompt "Scores: player #{hsh['player']}, computer #{hsh['computer']}"
+end
+
+def increment_score(scores, winner)
+  scores[winner] += 1 if winner
+end
+
+def grand_winner?(scores)
+  !(scores.values.include?(5))
+end
+
+def play_again?
+  answer = gets.chomp
+  answer.downcase.start_with?('y')
+end
+
+def print_grand_winner_message(scores)
+  if scores['player'] == 5
+    prompt messages "grand_winner_player"
+  elsif scores['computer'] == 5
+    prompt messages "grand_winner_computer"
+  else
+    prompt messages "not_grand_winner"
   end
 end
 
@@ -90,20 +117,17 @@ my_choice = ''
 loop do
   my_choice = obtain_my_choice
   computer_choice = obtain_computer_choice
-
-  prompt format(messages("choice_output"), p1: my_choice, p2: computer_choice)
-
-  win?(my_choice, computer_choice, scores)
-  p scores
-
-  break unless !(scores.values.include?(5))
-
+  display_choices(my_choice, computer_choice)
+  round_winner = win?(my_choice, computer_choice)
+  display_results(round_winner)
+  increment_score(scores, round_winner)
+  display_current_scores(scores)
+  break unless grand_winner?(scores)
   prompt messages "continuation_prompt"
-  answer = gets.chomp
-  break unless answer.downcase.start_with?('y')
+  break unless play_again?
   clear_screen
 end
 
 clear_screen
-prompt format(messages("g_mes"), wr: scores.key(5)) if scores.values.include?(5)
+print_grand_winner_message(scores)
 prompt messages "thanks"
