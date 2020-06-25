@@ -1,3 +1,4 @@
+require "pry"
 WINNING_LINES = [[1, 2, 3], [4, 5, 6], [7, 8, 9]] +
                 [[1, 4, 7], [2, 5, 8], [3, 6, 9]] +
                 [[1, 5, 9], [3, 5, 7]]
@@ -6,6 +7,7 @@ PLAYER_MARKER = 'X'
 COMPUTER_MARKER = 'O'
 FIRST_PLAYER = 'choose' # takes 'player', 'computer', or 'choose'
 CONTENDERS = Hash['p', 'player', 'c', 'computer']
+MAX_SCORE = 5
 scores = Hash['Player', 0, 'Computer', 0]
 
 def prompt(msg)
@@ -49,6 +51,10 @@ def validate_input?(letter)
   CONTENDERS.keys.include?(letter)
 end
 
+def valid_num?(num)
+  !!(/^[1-9]+$/.match(num))
+end
+
 def choose_first_player
   prompt "Who should go first?"
   prompt "Enter p for 'player' or c for 'computer' "
@@ -87,15 +93,15 @@ def joinor(arr, delimiter=', ', word='or')
 end
 
 def player_places_piece!(brd)
-  square = ''
+  square = nil
 
   loop do
     prompt "Choose a square (#{joinor(empty_spaces(brd))})"
-    square = gets.chomp.to_i
-    break if empty_spaces(brd).include?(square)
+    square = gets.chomp
+    break if empty_spaces(brd).include?(square.to_i) && valid_num?(square)
     prompt "Sorry, that's not a valid choice"
   end
-  brd[square] = PLAYER_MARKER
+  brd[square.to_i] = PLAYER_MARKER
 end
 
 def find_at_risk_square(line, brd, marker)
@@ -188,18 +194,18 @@ loop do
     prompt "It's a tie!"
   end
 
-  if scores.values.include?(5)
+  if scores.values.include?(MAX_SCORE)
     clear_screen
-    prompt "#{scores.key(5)} is the super winner!"
+    prompt "#{scores.key(MAX_SCORE)} is the super winner!"
     break
   else
     prompt "Play again? (y or n)"
-    answer = gets.chomp
-    break unless answer.downcase.start_with?('y')
+    ans = gets.chomp
+    break unless ans.downcase.start_with?('y')
   end
 end
 
-unless scores.values.include?(5)
+unless scores.values.include?(MAX_SCORE)
   clear_screen
   prompt "Not the super winner yet. Better luck next time."
 end
