@@ -18,6 +18,21 @@ def clear_screen
   system('clear') || system('cls')
 end
 
+def display_rules
+  puts "============================================"
+  prompt "     *****Welcome to Tictactoe!*****"
+  prompt "Some rules"
+  prompt "First contender to attain a score of five is the winner"
+  prompt "Don't lose!"
+  puts "============================================"
+
+  loop do
+    prompt "Enter any key to continue: "
+    answer = gets.chomp
+    break if answer
+  end
+end
+
 def display_score(scores)
   clear_screen
   prompt "Scores Player:#{scores['Player']} Computer:#{scores['Computer']}"
@@ -60,7 +75,7 @@ def choose_first_player
   prompt "Enter p for 'player' or c for 'computer' "
   letter = ''
   loop do
-    letter = gets.chomp
+    letter = gets.chomp.downcase
     break unless !(validate_input?(letter))
     prompt "Invalid input. Enter p for 'player' or c for 'computer' "
   end
@@ -69,7 +84,6 @@ end
 
 def initialize_player
   clear_screen
-  prompt "Welcome to Tictactoe!"
   if FIRST_PLAYER == 'choose'
     choose_first_player
   else
@@ -110,19 +124,21 @@ def find_at_risk_square(line, brd, marker)
   end
 end
 
-def computer_places_piece!(brd)
+def get_mark(brd, marker)
   square = nil
 
   WINNING_LINES.each do |line|
-    square = find_at_risk_square(line, brd, COMPUTER_MARKER)
+    square = find_at_risk_square(line, brd, marker)
     break if square
   end
+  square
+end
+
+def computer_places_piece!(brd)
+  square = get_mark(brd, COMPUTER_MARKER)
 
   if !square
-    WINNING_LINES.each do |line|
-      square = find_at_risk_square(line, brd, PLAYER_MARKER)
-      break if square
-    end
+    square = get_mark(brd, PLAYER_MARKER)
   end
 
   square = 5 if empty_spaces(brd).include?(5)
@@ -155,11 +171,32 @@ def someone_won?(brd)
   !!detect_winner(brd)
 end
 
+def display_round_winner(brd, scores)
+  if someone_won?(brd)
+    prompt "#{detect_winner(brd)} wins this round!"
+    keep_score!(scores, brd)
+  else
+    prompt "It's a tie!"
+  end
+end
+
+def display_match_winner(scores)
+  prompt "#{scores.key(MAX_SCORE)} is the super winner!"
+end
+
+def display_no_match_winner
+  prompt "You're not the super winner yet."
+end
+
+def winner?(brd, line, marker)
+  brd.values_at(*line).count(marker) == 3
+end
+
 def detect_winner(brd)
   WINNING_LINES.each do |line|
-    if brd.values_at(*line).count(PLAYER_MARKER) == 3
+    if winner?(brd, line, PLAYER_MARKER)
       return 'Player'
-    elsif brd.values_at(*line).count(COMPUTER_MARKER) == 3
+    elsif winner?(brd, line, COMPUTER_MARKER)
       return 'Computer'
     end
   end
@@ -170,6 +207,17 @@ def keep_score!(scores, brd)
   scores[detect_winner(brd)] += 1
 end
 
+def match_winner?(scores)
+  scores.values.include?(MAX_SCORE)
+end
+
+def play_again?
+  prompt "Play again? (y or n)"
+  ans = gets.chomp.downcase
+  ['y', 'yes'].include?(ans)
+end
+
+display_rules
 first_taker = initialize_player
 
 loop do
@@ -187,27 +235,17 @@ loop do
 
   display_score(scores)
   display_board(board)
-  if someone_won?(board)
-    prompt "#{detect_winner(board)} wins this round!"
-    keep_score!(scores, board)
-  else
-    prompt "It's a tie!"
-  end
+  display_round_winner(board, scores)
 
-  if scores.values.include?(MAX_SCORE)
+  if match_winner?(scores)
     clear_screen
-    prompt "#{scores.key(MAX_SCORE)} is the super winner!"
+    display_match_winner(scores)
     break
   else
-    prompt "Play again? (y or n)"
-    ans = gets.chomp
-    break unless ans.downcase.start_with?('y')
+    display_no_match_winner
+    break unless play_again?
   end
 end
 
-unless scores.values.include?(MAX_SCORE)
-  clear_screen
-  prompt "Not the super winner yet. Better luck next time."
-end
-prompt "Scores Player:#{scores['Player']} Computer:#{scores['Computer']}"
+display_score(scores)
 prompt "Thanks for playing Tictactoe! Goodbye!"
