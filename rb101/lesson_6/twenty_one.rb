@@ -1,4 +1,3 @@
-require "pry"
 WHATEVER_ONE = 21
 MIN_HIT = 17
 MAX_SCORE = 5
@@ -25,9 +24,11 @@ def display_instructions
   prompt "First contender to attain a score of five is the winner"
   prompt "Don't lose!"
   puts "============================================"
+end
 
+def continue_to_game
   loop do
-    prompt "Enter any key to continue: "
+    prompt "Input any key and press 'Enter' to continue: "
     answer = gets.chomp
     break if answer
   end
@@ -44,7 +45,7 @@ end
 def hit(deck)
   hsh_key = deck.to_a.sample.first
   value = deck[hsh_key].sample
-  hsh_key[0] + deck[hsh_key].delete(value)
+  deck[hsh_key].delete(value) + hsh_key[0]
 end
 
 def deal_cards(deck)
@@ -69,7 +70,7 @@ end
 
 def total(arr)
   cloned_arr = arr.clone
-  cloned_arr.map! { |i| i[1..-1] }
+  cloned_arr.map! { |i| i[0..-2] }
   values = VALUES.values_at(*cloned_arr)
   sum = values.sum
 
@@ -80,6 +81,40 @@ def total(arr)
     end
   end
   sum
+end
+
+def player_turn(player_hand, deck, player_total)
+  if player_total == WHATEVER_ONE
+    prompt "You have reached the limit, advise you (s)tay"
+    player_turn = 's'
+  else
+    player_turn = hit_or_stay
+  end
+
+  if hit?(player_turn)
+    player_hand << hit(deck)
+    player_total = total(player_hand)
+    prompt "You chose to hit!"
+    prompt "Your cards are now: #{player_hand}"
+    prompt "Your total is now: #{player_total}"
+  end
+  [player_turn, player_total]
+end
+
+def dealer_turn(dealer_hand, deck)
+  prompt "Dealer hits!"
+  dealer_hand << hit(deck)
+  dealer_total = total(dealer_hand)
+  prompt "Dealer's card are now: #{dealer_hand}"
+  dealer_total
+end
+
+def hit?(player_turn)
+  player_turn == 'h'
+end
+
+def stay?(player_turn)
+  player_turn == 's'
 end
 
 def busted?(whoever_total)
@@ -129,10 +164,10 @@ def display_results(dealer_total, player_total, scores)
   end
 end
 
-def display_cards(dealer, player, dealer_total, player_total)
+def display_cards(dealer_hand, player_hand, dealer_total, player_total)
   puts "=============="
-  prompt "Dealer has #{dealer}, for a total of: #{dealer_total}"
-  prompt "Player has #{player}, for a total of: #{player_total}"
+  prompt "Dealer has #{dealer_hand}, for a total of: #{dealer_total}"
+  prompt "Player has #{player_hand}, for a total of: #{player_total}"
   puts "=============="
 end
 
@@ -163,35 +198,28 @@ def play_again?
 end
 
 display_instructions
+continue_to_game
 
 loop do
   clear_screen
   display_score(scores)
   deck = initialize_deck(cards)
-  player = deal_cards(deck)
-  dealer = deal_cards(deck)
-  player_total = total(player)
-  dealer_total = total(dealer)
-  prompt "Dealer has: #{dealer.first[1..-1]} and unknown card"
-  prompt "You have: #{player[0][1..-1]} and #{player[-1][1..-1]}"
+  player_hand = deal_cards(deck)
+  dealer_hand = deal_cards(deck)
+  player_total = total(player_hand)
+  dealer_total = total(dealer_hand)
+  prompt "Dealer has: #{dealer_hand.first} and unknown card"
+  prompt "You have: #{player_hand[0]} and #{player_hand[-1]}"
 
   # player's turn
   loop do
-    player_turn = hit_or_stay
+    player_choice, player_total = player_turn(player_hand, deck, player_total)
 
-    if player_turn == 'h'
-      player << hit(deck)
-      player_total = total(player)
-      prompt "You chose to hit!"
-      prompt "Your cards are now: #{player}"
-      prompt "Your total is now: #{player_total}"
-    end
-
-    break if player_turn == "s" || busted?(player_total)
+    break if stay?(player_choice) || busted?(player_total)
   end
 
   if busted?(player_total)
-    displays(dealer, player, dealer_total, player_total, scores)
+    displays(dealer_hand, player_hand, dealer_total, player_total, scores)
 
     if winner?(scores)
       display_match_winner(scores)
@@ -210,15 +238,12 @@ loop do
   loop do
     break if dealer_total >= MIN_HIT
 
-    prompt "Dealer hits!"
-    dealer << hit(deck)
-    dealer_total = total(dealer)
-    prompt "Dealer's card are now: #{dealer}"
+    dealer_total = dealer_turn(dealer_hand, deck)
   end
 
   if busted?(dealer_total)
     prompt "Dealer total is now: #{dealer_total}"
-    displays(dealer, player, dealer_total, player_total, scores)
+    displays(dealer_hand, player_hand, dealer_total, player_total, scores)
     if winner?(scores)
       display_match_winner(scores)
       break
@@ -231,7 +256,7 @@ loop do
   end
 
   # both player and dealer stays - compare cards!
-  displays(dealer, player, dealer_total, player_total, scores)
+  displays(dealer_hand, player_hand, dealer_total, player_total, scores)
   if winner?(scores)
     display_match_winner(scores)
     break
