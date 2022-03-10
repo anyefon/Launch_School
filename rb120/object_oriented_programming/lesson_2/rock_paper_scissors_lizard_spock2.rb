@@ -123,8 +123,6 @@ class Human < Player
 end
 
 class Computer < Player
-  attr_accessor :personality
-
   def initialize
     super
     @r2d2 = R2D2.new
@@ -154,6 +152,10 @@ class Computer < Player
   def set_name
     self.name = ['R2D2', 'Hal', 'Chappie', 'Sonny', 'Number 5'].sample
   end
+
+  protected
+
+  attr_accessor :personality
 end
 
 class R2D2 < Computer
