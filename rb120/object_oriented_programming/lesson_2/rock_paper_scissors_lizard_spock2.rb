@@ -245,7 +245,7 @@ class RPSGame
 
     loop do
       puts
-      puts "If you understand the rules, press any key to continue"
+      puts "Press the Enter key to continue"
       key = gets.chomp
       break if key
     end
